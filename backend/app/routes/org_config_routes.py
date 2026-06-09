@@ -58,11 +58,12 @@ def get_org_by_name(org_name: str):
             raise HTTPException(status_code=404, detail=f"Org '{org_name}' not found")
 
         # mask secret in detailed response
-        c = dict(org.get("connection", {}))
-        if "client_secret" in c:
-            c["client_secret"] = "********"
+        # copy org and mask secret
+        safe_org = dict(org)
+        safe_org["client_secret"] = "********" 
+        
+        print(f"the og details are = {safe_org}")
 
-        safe_org = {**org, "connection": c}
         return safe_org
     except ConfigException as e:
         raise HTTPException(status_code=400, detail=e.message)

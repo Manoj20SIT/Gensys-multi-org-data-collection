@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { orgService, type Org } from "../services/orgService";
+import { orgService } from "../services/orgService";
 import OrgForm, { type OrgFormValues } from "../components/OrgForm";
 import "../styles/OrgForm.css";
+import type { Org } from "../types/OrgTypes";
 
 const EditOrg: React.FC = () => {
   const { orgName } = useParams();
@@ -37,12 +38,13 @@ const EditOrg: React.FC = () => {
       try {
         const data: Org = await orgService.getOrgByName(decodeURIComponent(orgName));
         setOriginalName(data.org_name || "");
+        console.log(" the edit org data received is ", data)
         setForm({
           org_name: data.org_name || "",
-          region: data.connection?.region || "",
-          api_base_url: data.connection?.api_base_url || "",
-          client_id: data.connection?.client_id || "",
-          client_secret: data.connection?.client_secret || "",
+          region: data.region || "",
+          api_base_url: data.api_base_url || "",
+          client_id: data.client_id || "",
+          client_secret: data.client_secret || "",
         });
       } catch (e: any) {
         setError(e?.response?.data?.detail || e?.message || "Failed to load organization");
@@ -61,6 +63,7 @@ const EditOrg: React.FC = () => {
 
   const handleChange = (key: keyof OrgFormValues, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
+    if (error) setError("");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -72,12 +75,10 @@ const EditOrg: React.FC = () => {
     try {
       const payload = {
         org_name: form.org_name.trim(),
-        connection: {
-          region: form.region.trim(),
-          api_base_url: form.api_base_url.trim(),
-          client_id: form.client_id.trim(),
-          client_secret: form.client_secret.trim(),
-        },
+        region: form.region.trim(),
+        api_base_url: form.api_base_url.trim(),
+        client_id: form.client_id.trim(),
+        ...(form.client_secret.trim() ? { client_secret: form.client_secret.trim() } : {}),
       };
 
       await orgService.updateOrg(originalName, payload as any);

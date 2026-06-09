@@ -26,53 +26,44 @@ const AddOrg: React.FC = () => {
 
   const handleChange = (key: keyof OrgFormValues, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
+    if (error) setError("");
   };
 
-  const validate = () => {
-    if (!form.org_name.trim()) return "Organization Name is required";
-    if (!form.region.trim()) return "Region is required";
-    if (!form.api_base_url.trim()) return "API Base URL is required";
-    if (!form.client_id.trim()) return "Client ID is required";
-    if (!form.client_secret.trim()) return "Client Secret is required";
-    return "";
-  };
+  // const validate = () => {
+  //   if (!form.org_name.trim()) return "Organization Name is required";
+  //   if (!form.region.trim()) return "Region is required";
+  //   if (!form.api_base_url.trim()) return "API Base URL is required";
+  //   if (!form.client_id.trim()) return "Client ID is required";
+  //   if (!form.client_secret.trim()) return "Client Secret is required";
+  //   return "";
+  // };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setSuccess("");
+  e.preventDefault();
+  setError("");
+  setSuccess("");
 
-    const msg = validate();
-    if (msg) {
-      setError(msg);
-      return;
-    }
+  setSaving(true);
+  try {
+    const payload = {
+      org_name: form.org_name.trim(),
+      region: form.region.trim(),
+      api_base_url: form.api_base_url.trim(),
+      client_id: form.client_id.trim(),
+      client_secret: form.client_secret.trim(),
+    };
 
-    setSaving(true);
-    try {
-      const payload = {
-        org_name: form.org_name.trim(),
-        connection: {
-          region: form.region.trim(),
-          api_base_url: form.api_base_url.trim(),
-          client_id: form.client_id.trim(),
-          client_secret: form.client_secret.trim(),
-        },
-      };
+    await orgService.createOrg(payload as any);
 
-      // Make sure your orgService has createOrg implemented
-      await orgService.createOrg(payload as any);
+    setSuccess("Organization created successfully.");
+    navigate(`/orgs/${encodeURIComponent(form.org_name.trim())}`);
+  } catch (e: any) {
+    setError(e?.response?.data?.detail || e?.message || "Failed to create organization");
+  } finally {
+    setSaving(false);
+  }
+};
 
-      setSuccess("Organization created successfully.");
-
-      // redirect to view page of created org
-      navigate(`/orgs/${encodeURIComponent(form.org_name.trim())}`);
-    } catch (e: any) {
-      setError(e?.response?.data?.detail || e?.message || "Failed to create organization");
-    } finally {
-      setSaving(false);
-    }
-  };
 
   return (
     <div className="container py-4 py-md-5">

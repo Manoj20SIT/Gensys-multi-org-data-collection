@@ -19,6 +19,8 @@ type OrgFormProps = {
   disableOrgName?: boolean;
 };
 
+type Errors = Partial<Record<keyof OrgFormValues, string>>;
+
 const OrgForm: React.FC<OrgFormProps> = ({
   values,
   onChange,
@@ -29,9 +31,41 @@ const OrgForm: React.FC<OrgFormProps> = ({
   disableOrgName = false,
 }) => {
   const [showSecret, setShowSecret] = useState(false);
+  const [errors, setErrors] = useState<Errors>({});
+
+  const validate = (): Errors => {
+    const next: Errors = {};
+
+    if (!values.org_name.trim()) next.org_name = "Organization Name is required.";
+    if (!values.region.trim()) next.region = "Region is required.";
+    if (!values.api_base_url.trim()) next.api_base_url = "API Base URL is required.";
+    if (!values.client_id.trim()) next.client_id = "Client ID is required.";
+    if (!values.client_secret.trim()) next.client_secret = "Client Secret is required.";
+
+    // Optional URL format check
+    if (values.api_base_url.trim()) {
+      try {
+        new URL(values.api_base_url.trim());
+      } catch {
+        next.api_base_url = "Please enter a valid URL (e.g. https://api.example.com).";
+      }
+    }
+
+    return next;
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const nextErrors = validate();
+    setErrors(nextErrors);
+
+    if (Object.keys(nextErrors).length > 0) return; // block submit
+
+    onSubmit(e);
+  };
 
   return (
-    <form onSubmit={onSubmit} className="card org-form-card border-0">
+    <form onSubmit={handleSubmit} className="card org-form-card border-0" noValidate>
       <div className="card-body p-4 p-md-5">
         <div className="row g-4">
           <Field
@@ -39,8 +73,13 @@ const OrgForm: React.FC<OrgFormProps> = ({
             label="Organization Name"
             icon="🏢"
             value={values.org_name}
-            onChange={(v) => onChange("org_name", v)}
+            onChange={(v) => {
+  onChange("org_name", v);
+  setErrors((prev) => ({ ...prev, org_name: undefined }));
+}}
             disabled={disableOrgName}
+            required
+            error={errors.org_name}
           />
 
           <Field
@@ -48,7 +87,12 @@ const OrgForm: React.FC<OrgFormProps> = ({
             label="Region"
             icon="🌍"
             value={values.region}
-            onChange={(v) => onChange("region", v)}
+            onChange={(v) => {
+  onChange("region", v);
+  setErrors((prev) => ({ ...prev, region: undefined }));
+}}
+            required
+            error={errors.region}
           />
 
           <Field
@@ -56,7 +100,12 @@ const OrgForm: React.FC<OrgFormProps> = ({
             label="API Base URL"
             icon="🔗"
             value={values.api_base_url}
-            onChange={(v) => onChange("api_base_url", v)}
+            onChange={(v) => {
+  onChange("api_base_url", v);
+  setErrors((prev) => ({ ...prev, api_base_url: undefined }));
+}}
+            required
+            error={errors.api_base_url}
           />
 
           <Field
@@ -64,7 +113,12 @@ const OrgForm: React.FC<OrgFormProps> = ({
             label="Client ID"
             icon="🆔"
             value={values.client_id}
-            onChange={(v) => onChange("client_id", v)}
+            onChange={(v) => {
+  onChange("client_id", v);
+  setErrors((prev) => ({ ...prev, client_id: undefined }));
+}}
+            required
+            error={errors.client_id}
           />
 
           <Field
@@ -73,7 +127,12 @@ const OrgForm: React.FC<OrgFormProps> = ({
             icon="🔐"
             type={showSecret ? "text" : "password"}
             value={values.client_secret}
-            onChange={(v) => onChange("client_secret", v)}
+            onChange={(v) => {
+  onChange("client_secret", v);
+  setErrors((prev) => ({ ...prev, client_secret: undefined }));
+}}
+            required
+            error={errors.client_secret}
             rightAction={
               <button
                 type="button"
@@ -116,6 +175,8 @@ type FieldProps = {
   disabled?: boolean;
   icon?: string;
   rightAction?: React.ReactNode;
+  required?: boolean;
+  error?: string;
 };
 
 const Field: React.FC<FieldProps> = ({
@@ -127,9 +188,11 @@ const Field: React.FC<FieldProps> = ({
   disabled = false,
   icon = "•",
   rightAction,
+  required = false,
+  error,
 }) => (
   <div className="col-12 col-md-6">
-    <div className={`floating-group ${value ? "has-value" : ""}`}>
+    <div className={`floating-group ${value ? "has-value" : ""} ${error ? "has-error" : ""}`}>
       <span className="field-icon" aria-hidden>
         {icon}
       </span>
@@ -137,20 +200,29 @@ const Field: React.FC<FieldProps> = ({
       <input
         id={id}
         type={type}
-        className="form-control floating-input"
+        className={`form-control floating-input ${error ? "is-invalid" : ""}`}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
         autoComplete="off"
         placeholder=" "
+        required={required}
+        aria-invalid={!!error}
+        aria-describedby={error ? `${id}-error` : undefined}
       />
 
       <label htmlFor={id} className="floating-label">
-        {label}
+        {label} {required ? "*" : ""}
       </label>
 
       {rightAction && <div className="field-right-action">{rightAction}</div>}
     </div>
+
+    {error && (
+      <div id={`${id}-error`} className="field-error-text">
+        {error}
+      </div>
+    )}
   </div>
 );
 

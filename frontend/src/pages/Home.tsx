@@ -16,9 +16,7 @@ const Home: React.FC = () => {
   const [showRunModal, setShowRunModal] = useState(false);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
-
   const navigate = useNavigate();
-
   const loadOrgs = async () => {
     setLoading(true);
     setError("");
@@ -154,13 +152,13 @@ const Home: React.FC = () => {
       ) : (
         <div className="d-grid gap-3">
           {filteredOrgs.map((org) => (
-            <div key={org.org_name} className="org-row card border-0 shadow-sm">
-              <div className="card-body d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div key={org.org_name} className="org-row card  shadow-sm">
+              <div className="card-body org-row-body d-flex flex-wrap justify-content-between align-items-center gap-3">
                 <div className="d-flex align-items-center gap-3">
                   <div className="org-avatar">{org.org_name?.charAt(0)?.toUpperCase() || "O"}</div>
-                  <div>
-                    <h5 className="mb-0 fw-bold">{org.org_name}</h5>
-                    <small className="text-muted">Organization</small>
+                  <div className="org-name-wrap  always-visible" >
+                    <h5 className="mb-0 fw-bold org-name">{org.org_name}</h5>
+                    <small className=" org-meta">Organization</small>
                   </div>
                 </div>
 

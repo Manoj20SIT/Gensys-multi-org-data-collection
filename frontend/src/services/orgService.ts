@@ -28,6 +28,7 @@ export const orgService = {
   },
 
   async createOrg(payload: any) {
+  console.log(" the requested data is ",payload)
   const res = await authService.api.post("/api/orgs", payload);
   return res.data;
 }

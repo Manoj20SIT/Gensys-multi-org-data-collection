@@ -11,7 +11,6 @@ const OrgView: React.FC = () => {
   const [org, setOrg] = useState<Org | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
   useEffect(() => {
     const fetchOrg = async () => {
       if (!orgName) {
@@ -36,7 +35,7 @@ const OrgView: React.FC = () => {
     fetchOrg();
   }, [orgName]);
 
-  const connection = org?.connection ?? {};
+  // const connection = org?.connection ?? {};
   const initials = (org?.org_name || "O").slice(0, 1).toUpperCase();
 
   return (
@@ -77,10 +76,10 @@ const OrgView: React.FC = () => {
         <div className="card org-row border-0 shadow-sm">
           <div className="card-body p-4 p-md-5">
             <div className="row g-3">
-              <Info label="Region" value={connection.region ?? "-"} />
-              <Info label="API Base URL" value={connection.api_base_url ?? "-"} mono />
-              <Info label="Client ID" value={connection.client_id ?? "-"} mono />
-              <Info label="Client Secret" value={connection.client_secret ?? "-"} mono />
+              <Info label="Region" value={org.region ?? "-"} />
+              <Info label="API Base URL" value={org.api_base_url ?? "-"} mono />
+              <Info label="Client ID" value={org.client_id ?? "-"} mono />
+              <Info label="Client Secret" value={org.client_secret ?? "-"} mono />
             </div>
           </div>
         </div>
