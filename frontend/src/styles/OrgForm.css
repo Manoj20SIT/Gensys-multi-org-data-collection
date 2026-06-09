@@ -1,0 +1,106 @@
+/* Card */
+.org-form-card {
+  border-radius: 22px;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+  border: 1px solid #e8edf3;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+}
+
+/* Field layout */
+.floating-group {
+  position: relative;
+}
+
+/* Icon */
+.field-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-size: 15px;
+  background: linear-gradient(135deg, #fff7ed, #ffedd5);
+  border: 1px solid #fed7aa;
+  box-shadow: 0 4px 10px rgba(255, 121, 0, 0.12);
+  z-index: 2;
+}
+
+/* Input */
+.floating-input {
+  height: 62px;
+  border-radius: 14px;
+  border: 1.5px solid #d7e0ea;
+  background: #fff;
+  color: #0f172a;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 1.35rem 1rem 0.5rem 58px;
+  transition: all 0.2s ease;
+}
+
+.floating-input:hover {
+  border-color: #b9c7d8;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
+}
+
+.floating-input:focus {
+  border-color: #ff7900;
+  box-shadow: 0 0 0 4px rgba(255, 121, 0, 0.15);
+  outline: none;
+}
+
+/* Floating label */
+.floating-label {
+  position: absolute;
+  left: 58px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.96rem;
+  font-weight: 700;
+  color: #6b7b8f;
+  pointer-events: none;
+  transition: all 0.18s ease;
+}
+
+.floating-input:focus + .floating-label,
+.floating-group.has-value .floating-label {
+  top: 10px;
+  transform: translateY(0);
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #4b5d73;
+}
+
+/* Actions */
+.org-form-actions {
+  border-top: 1px solid #e9eef5;
+  padding-top: 1.3rem;
+}
+
+/* Optional right action (show/hide) */
+.field-right-action {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.secret-toggle-btn {
+  border: none;
+  background: transparent;
+  color: #475569;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .floating-input {
+    height: 58px;
+  }
+}

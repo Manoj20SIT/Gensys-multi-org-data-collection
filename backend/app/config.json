@@ -1,0 +1,14 @@
+{
+  "application": {
+    "name": "genesys-audit-collector"
+  },
+  "org_details": [
+    
+    {
+      "org_name": "ComfortDelGro",
+      "region": "ap_northeast_1",
+      "api_base_url": "https://api.mypurecloud.jp",
+      "client_id": "612aac5b-ab25-4f4c-a960-ce8e8864cc8e"
+    }
+  ]
+}

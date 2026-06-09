@@ -1,0 +1,48 @@
+.home-hero {
+  border-radius: 20px;
+  background: linear-gradient(135deg, #1f2937 0%, #374151 45%, #4b5563 100%);
+  color: #fff;
+  box-shadow: 0 12px 30px rgba(17, 24, 39, 0.25);
+}
+
+.hero-kicker {
+  letter-spacing: 0.08em;
+  opacity: 0.85;
+}
+
+.hero-subtitle {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.stat-pill {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  font-weight: 600;
+}
+
+.org-row {
+  border-radius: 16px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.org-row:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12) !important;
+}
+
+.org-avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #ff7900 0%, #ff9f43 100%);
+  box-shadow: 0 6px 16px rgba(255, 121, 0, 0.35);
+}
+
+.empty-card {
+  border-radius: 16px;
+}
