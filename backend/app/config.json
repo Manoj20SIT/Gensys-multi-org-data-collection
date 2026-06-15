@@ -10,10 +10,10 @@
       "client_id": "612aac5b-ab25-4f4c-a960-ce8e8864cc8e"
     },
     {
-      "org_name": "test_org",
-      "region": "asia",
-      "api_base_url": "https://1223.com",
-      "client_id": "12112"
+      "org_name": "OABPCLab",
+      "region": "eu_west_1",
+      "api_base_url": "https://api.mypurecloud.ie",
+      "client_id": "9480a2bd-c33c-44d3-977a-1d681987c14a"
     }
   ]
 }

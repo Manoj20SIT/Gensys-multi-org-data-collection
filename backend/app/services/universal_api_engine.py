@@ -22,6 +22,7 @@ Design goals:
 - Easy debug through detailed logs
 """
 
+
 from dataclasses import dataclass
 import json
 from typing import Any, Dict, Callable, List, Optional
@@ -138,11 +139,11 @@ class UniversalApiEngine:
             # Perform SDK call
             logger.debug(f"Executing SDK call | key= {task.key} | kwargs={task.kwargs}")
             resp = fn(**task.kwargs)
-            # print(f" receieved result is =================== {resp}")
+           
             logger.info(f"SDK call success | key={task.key}")
-            # Print raw API response object
-            logger.info(f"\n[{org_name}] API RESPONSE | task={task.key} | api={task.api_name}.{task.method_name}")
-            # logger.info(resp)
+         
+            # logger.info(f"\n[{org_name}] API RESPONSE | task={task.key} | api={task.api_name}.{task.method_name}")
+          
 
             # If no extractor configured, return raw SDK response
             if not task.extractor:
@@ -165,22 +166,27 @@ class UniversalApiEngine:
             return value
         
         except ApiException as e:
-            
             status = getattr(e, "status", None)
             reason = getattr(e, "reason", None)
             body = getattr(e, "body", None)
+            headers = getattr(e, "headers", None)
+
+            parsed_body = self._safe_parse_error_body(body)
             context_id = self._extract_context_id(body)
             retryable = status in [429, 500, 502, 503, 504]
 
-            logger.error(
-                f"Genesys API exception | org={org_name} | key={task.key} | "
-                f"api={task.api_name} | method={task.method_name} | "
-                f"status={status} | reason={reason} | contextId={context_id}",
-                exc_info=True
+            logger.exception(
+                f"org={org_name} | key={task.key} | api={task.api_name} | method={task.method_name} | status={status} | reason={reason} | contextId={context_id}"
+            )
+
+            err_msg = (
+                parsed_body.get("message")
+                if isinstance(parsed_body, dict)
+                else str(parsed_body or reason or "ApiException")
             )
 
             raise TaskExecutionException(
-                message=f"Genesys API call failed: {reason or 'ApiException'}",
+                message=err_msg,
                 task_key=task.key,
                 api=task.api_name,
                 method=task.method_name,
@@ -188,8 +194,13 @@ class UniversalApiEngine:
                 reason=reason,
                 context_id=context_id,
                 retryable=retryable,
-                context={"raw_body": body}
+                raw_error=parsed_body,
+                raw_body=body,
+                headers=dict(headers) if headers else None,
             )
+
+
+            
 
         except Exception as e:
             logger.error(
@@ -199,6 +210,14 @@ class UniversalApiEngine:
             raise
 
 
+    def _safe_parse_error_body(self, error_body):
+        try:
+            if not error_body:
+                return None
+            return json.loads(error_body) if isinstance(error_body, str) else error_body
+        except Exception:
+            return {"raw": str(error_body)}
+    
     def _extract_context_id(self, error_body):
         """Best-effort parse of Genesys contextId from error body JSON."""
         try:
@@ -226,29 +245,33 @@ class UniversalApiEngine:
         task_errors: List[Dict[str, Any]] = []
 
         for idx, t in enumerate(tasks, start=1):
-            logger.info(f"Processing task {idx}/{len(tasks)} | key={t.key}")
+            logger.debug(f"Processing task {idx}/{len(tasks)} | key={t.key}")
             try:
                 out[t.key] = self.execute_task(api_client, t, org_name=org_name)
+                
+                # logger.info(f"the data we receieved here################## {out[t.key]}")
             except TaskExecutionException as e:
                 out[t.key] = None
                 task_errors.append(e.to_dict())
                 logger.error(
                     f"Task failed but continuing | org={org_name} | key={t.key} | "
-                    f"status={e.context.get('status')} | reason={e.context.get('reason')}"
+                    f"status={e.status} | reason={e.reason}"
                 )
 
             except Exception as e:
                 logger.error(
-                    f"Task failed but continuing | org={org_name} | key={t.key} | "
-                    f"api={t.api_name} | method={t.method_name} | error={str(e)}",
-                    exc_info=True
-                )
+        f"Task failed but continuing | org={org_name} | key={t.key} | "
+        f"api={t.api_name} | method={t.method_name} | "
+        f"exc_type={type(e).__name__} | error={repr(e)}",
+        exc_info=True
+    )
                 out[t.key] = None
                 task_errors.append({
                     "task_key": t.key,
                     "api": t.api_name,
                     "method": t.method_name,
-                    "error": str(e)
+                    "error": str(e),
+                    "exc_type": type(e).__name__
                 })
 
         logger.info("Run tasks completed successfully")
@@ -271,7 +294,7 @@ class UniversalApiEngine:
         Works for APIs returning response.entities list.
         """
         count = len(getattr(resp, "entities", None) or [])
-        logger.debug(f"Extractor entity_count result={count}")
+        # logger.debug(f"Extractor entity_count result={count}")
         return count
 
     def _sum_metric_from_results(self, resp, metric_name: str, stat_field: str = "count", **_):
@@ -340,10 +363,27 @@ class UniversalApiEngine:
     
     def _sta_activation(self, resp, **_):
         """
-        returns active when textanalytics is enabled or else incative 
+        Returns:
+        - "active"   if textAnalyticsEnabled is true/"true"
+        - "inactive" otherwise
         """
-        if not isinstance(resp,dict):
+        print(f"resposne for sta activation is {resp} ")
+        if resp is None:
             return "inactive"
-        return "active" if resp.get("textAnalyticsEnabled") is True else "inactive"
-    
-    
+
+        # read value from dict or SDK model
+        if isinstance(resp, dict):
+            enabled = resp.get("textAnalyticsEnabled")
+        else:
+            enabled = getattr(resp, "text_analytics_enabled", None)
+            if enabled is None:
+                enabled = getattr(resp, "textAnalyticsEnabled", None)
+
+        # normalize bool/string
+        if isinstance(enabled, str):
+            enabled = enabled.strip().lower() == "true"
+
+        return "active" if enabled is True else "inactive"
+
+        
+        

@@ -62,6 +62,7 @@ class MetricsSchema(BaseModel):
     seatAdoptionBucket: Optional[float] = None
     tokenCommited: float = 0.0
     tokenActual: float = 0.0
+    unitOfMeasureType:Optional[str] = None
 
 
 class OrgResultSchema(BaseModel):

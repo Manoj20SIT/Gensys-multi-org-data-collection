@@ -8,13 +8,25 @@ import type { RunCollectionResponse } from "../types/RunCollectionTypes";
 const prettyKey = (k: string) =>
   k.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
-const formatValue = (v: any) => {
+const formatValue = (v: any, key?: string) => {
   if (v === null || v === undefined) return "-";
   if (typeof v === "boolean") return v ? "Yes" : "No";
+
+  const normalizedKey = (key || "").toLowerCase().replace(/[_\s]/g, "");
+
+  // matches: seatAdoptionBucket, seat_adoption_bucket, role_head_seat_adoption_bucket, etc.
+  if (normalizedKey.includes("seatadoptionbucket")) {
+    const n = Number(v);
+    if (Number.isNaN(n)) return String(v); // if already like "80%", keep as text
+    return `${n.toFixed(2)}%`;
+  }
+  
+
   if (typeof v === "number") return Number.isInteger(v) ? v.toString() : v.toFixed(2);
   if (typeof v === "object") return JSON.stringify(v);
   return String(v);
 };
+
 
 const getValueClass = (v: any) => {
   if (typeof v === "number") return v > 0 ? "rr-val rr-val-num" : "rr-val rr-val-zero";
@@ -166,7 +178,8 @@ const RunResults: React.FC = () => {
                     const val = r.metrics?.[col];
                     return (
                       <td key={col}>
-                        <span className={getValueClass(val)}>{formatValue(val)}</span>
+                        <span className={getValueClass(val)}>{formatValue(val,col)}</span>
+                        
                       </td>
                     );
                   })}

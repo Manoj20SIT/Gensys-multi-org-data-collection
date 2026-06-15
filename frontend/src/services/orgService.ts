@@ -31,6 +31,19 @@ export const orgService = {
   console.log(" the requested data is ",payload)
   const res = await authService.api.post("/api/orgs", payload);
   return res.data;
-}
+},
+
+
+async testConnection(payload: {
+    org_name: string;
+    region: string;
+    api_base_url: string;
+    client_id: string;
+    client_secret: string;
+  }) {
+    const res = await authService.api.post("/api/test-connection", payload);
+    return res.data;
+  },
+
 
 };

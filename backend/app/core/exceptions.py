@@ -1,10 +1,19 @@
+from typing import Any
+
+
+
+class ClientBuildError(Exception):
+    """Raised when API client creation/auth fails."""
+    pass
+
 class AppException(Exception):
-    def __init__(self, message: str, status_code: int = 400, code: str = "APP_ERROR", context: dict | None = None):
-        self.message = message
+    def __init__(self, message: Any, status_code: int = 400, code: str = "APP_ERROR", context: dict | None = None):
+        safe_message = message if isinstance(message, str) else str(message)
+        self.message = safe_message
         self.status_code = status_code
         self.code = code
         self.context = context or {}
-        super().__init__(message)
+        super().__init__(safe_message)
 
 
 class CredentialException(AppException):
@@ -26,10 +35,13 @@ class ConfigException(AppException):
             context=context
         )
 
-class TaskExecutionException(AppException):
+from typing import Any
+
+
+class TaskExecutionException(Exception):
     def __init__(
         self,
-        message: str = "Task execution failed",
+        message: Any = "Task execution failed",
         task_key: str | None = None,
         api: str | None = None,
         method: str | None = None,
@@ -37,34 +49,34 @@ class TaskExecutionException(AppException):
         reason: str | None = None,
         context_id: str | None = None,
         retryable: bool = False,
-        context: dict | None = None
+        raw_error: Any = None,
+        raw_body: Any = None,
+        headers: dict | None = None,
     ):
-        merged_context = {
-            "task_key": task_key,
-            "api": api,
-            "method": method,
-            "status": status,
-            "reason": reason,
-            "context_id": context_id,
-            "retryable": retryable,
-            **(context or {})
-        }
-
-        super().__init__(
-            message=message,
-            status_code=status or 500,
-            code="TASK_EXECUTION_ERROR",
-            context=merged_context
-        )
+        super().__init__(str(message))
+        self.message = str(message)
+        self.task_key = task_key
+        self.api = api
+        self.method = method
+        self.status = status
+        self.reason = reason
+        self.context_id = context_id
+        self.retryable = retryable
+        self.raw_error = raw_error
+        self.raw_body = raw_body
+        self.headers = headers or {}
 
     def to_dict(self):
         return {
-            "task_key": self.context.get("task_key"),
-            "api": self.context.get("api"),
-            "method": self.context.get("method"),
-            "status": self.context.get("status"),
-            "reason": self.context.get("reason"),
+            "task_key": self.task_key,
+            "api": self.api,
+            "method": self.method,
+            "status": self.status,
+            "reason": self.reason,
             "message": self.message,
-            "context_id": self.context.get("context_id"),
-            "retryable": self.context.get("retryable", False),
+            "context_id": self.context_id,
+            "retryable": self.retryable,
+            "raw_error": self.raw_error,
+            "raw_body": self.raw_body,
+            "headers": self.headers,
         }

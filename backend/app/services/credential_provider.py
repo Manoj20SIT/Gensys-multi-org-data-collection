@@ -34,12 +34,12 @@ class CredentialProvider:
             if not client_secret:
                 client_secret = self.secret_service.get_client_secret(org_name) or ""
 
-            print(f"\nDEBUG ORG #{idx}")
-            print("org_name:", org_name)
-            print("region:", region)
-            print("api_base_url:", api_base_url)
-            print("client_id:", client_id)
-            print("client_secret:", "SET" if client_secret else "MISSING")
+            # print(f"\nDEBUG ORG #{idx}")
+            # print("org_name:", org_name)
+            # print("region:", region)
+            # print("api_base_url:", api_base_url)
+            # print("client_id:", client_id)
+            # print("client_secret:", "SET" if client_secret else "MISSING")
 
             orgs.append(
                 OrgCredentials(

@@ -10,7 +10,7 @@ export type RunCollectionResponse = {
   results: Array<{
     org_name: string;
     
-    metrics: Record<string, any>;
+    metrics: Record<string, any> | null;
   }>;
   file_name?: string;
   download_url?: string;

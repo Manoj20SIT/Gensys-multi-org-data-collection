@@ -1,5 +1,6 @@
 import os
-from typing import List, Optional
+import re
+from typing import Any, Dict, List, Optional, Set
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
@@ -9,13 +10,15 @@ from app.services.credential_provider import CredentialProvider
 # from app.services.genesys_client import GenesysClient, create_genesys_client,  get_client_credentials_token
 # from app.services.org_processor import OrgProcessor
 from app.core.logger import logger
-from app.core.exceptions import ConfigException
+from app.core.exceptions import ClientBuildError, ConfigException
 # from app.services.genesys_service import fetch_org_data
 from app.services.collection_service import CollectionService
 from app.services.billing_http_service import fetch_billing_subscription_overview_http
 from app.services.genesys_client import TokenServiceSimple
 from app.schemas.response_schemas import RunCollectionResponseSchema
 from app.services.excel_export_service import ExcelExportError, ExcelExportService
+from app.services.connection_test_service import ConnectionTestService
+from app.services.test_connection_permission import build_permission_summary
 import httpx
 from fastapi import APIRouter, Query
 router = APIRouter(prefix="/api", tags=["org"])
@@ -93,6 +96,101 @@ def billing_subscription_overview_http(req: BillingHttpRequest):
         "total_orgs": len(orgs),
         "results": results
     }
+
+
+class TestConnectionRequest(BaseModel):
+    org_name: str
+    region: str
+    api_base_url: str
+    client_id: str
+    client_secret: str
+
+
+# Optional helper class if your tester expects attribute-style object
+class OrgInput(BaseModel):
+    org_name: str
+    region: str
+    api_base_url: str
+    client_id: str
+    client_secret: str
+
+
+@router.post("/test-connection")
+def test_connection(req: TestConnectionRequest):
+    tester = ConnectionTestService()
+
+    results: List[dict] = []
+
+
+    # Build org from frontend payload (instead of provider.get_org_credentials())
+    org = OrgInput(
+        org_name=req.org_name,
+        region=req.region,
+        api_base_url=req.api_base_url,
+        client_id=req.client_id,
+        client_secret=req.client_secret
+    )
+
+    try:
+        result = tester.test_connection_for_org(org=org)
+
+    except ClientBuildError as e:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "org_name": req.org_name,
+                "errorCode": "CLIENT_BUILD_FAILED",
+                "message": "Connection setup failed. Please verify api_base_url, region, client_id, and client_secret.",
+                "errorMessage": str(e),
+            },
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "org_name": req.org_name,
+                "errorCode": "UNEXPECTED_ERROR",
+                "message": "Connection test failed.",
+                "errorMessage": str(e),
+            },
+        )
+
+
+    summary = build_permission_summary(
+        checks=result.get("checks", []),
+        missing_areas=result.get("missingAreas", [])
+    )
+
+    results.append({
+        "org_name": org.org_name,
+        "success": summary["success"],
+        "message": "All required permissions are available." if summary["success"] else "Some permissions are missing.",
+        "overall": "ok" if summary["success"] else "partial",
+        "missingAreas": summary["missingAreas"],
+        "permissions_required": summary["permissions_required"]
+    })
+
+    
+
+    global_ok = all(r.get("success") for r in results)
+
+    return {
+        "total_orgs": 1,
+        "success": global_ok,
+        "message": "OK" if global_ok else "Permission issues found",
+        "results": results
+    }
+    
+def extract_permissions_from_raw_error(raw_error: Any) -> List[str]:
+    if isinstance(raw_error, dict):
+        msg = raw_error.get("message", "") or ""
+    else:
+        msg = str(raw_error or "")
+    matches = re.findall(r"$$([^$$]+)\]", msg)
+    perms: List[str] = []
+    for m in matches:
+        perms.extend([p.strip() for p in m.split(",") if p.strip()])
+    return perms
 
 
 

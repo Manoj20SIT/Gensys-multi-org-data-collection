@@ -1,5 +1,5 @@
 from typing import Dict, Any, List, Optional
-
+from app.core.logger import logger
 
 def _to_float(value: Any, default: float = 0.0) -> float:
     try:
@@ -24,6 +24,8 @@ def map_to_ui_fields(raw: Dict[str, Any], fields: Optional[List[str]] = None,
                      ) -> Dict[str, Any]:
     raw = raw or {}
     billing_metrics = billing_metrics or {}
+    logger.info("map_to_ui_fields start | raw_keys=%d billing_keys=%d",
+                    len(raw.keys()), len(billing_metrics.keys()))
     by_dir_offered = raw.get("voice_by_direction_offered") or {}
     by_dir_out = raw.get("voice_by_direction_outbound_attempted") or {}
     by_media = raw.get("offered_by_media") or {}
@@ -47,9 +49,17 @@ def map_to_ui_fields(raw: Dict[str, Any], fields: Optional[List[str]] = None,
     gamification_activation_status= "active" if (raw.get("gamification_activation_count") or 0) > 0 else "inactive"
     # recording_activation_status= "active" if (raw.get("recording_activation__count") or 0) > 0 else "inactive"
 
-
-
+    license_model = billing_metrics.get("licenseModel") or {}
+    ai_tokens = billing_metrics.get("aiExperienceTokens") or {}
+    
+    
+    logger.info(f"raw keys:{list(raw.keys())}")
+    logger.info(f"sta_activation_status value {raw.get('sta_activation_status')}")
+    
+    
+    
     metrics ={
+        
         "inbound_call_count": inbound,
         "outbound_call_count": outbound,
         "total_call_count": inbound + outbound,
@@ -84,11 +94,19 @@ def map_to_ui_fields(raw: Dict[str, Any], fields: Optional[List[str]] = None,
         # billing fields
         "isInRampPeriod": billing_metrics.get("isInRampPeriod"),
         "licenseModel": (billing_metrics.get("licenseModel") or {}).get("license_model"),
-        "userCommit": (billing_metrics.get("licenseModel") or {}).get("user_commit"),
-        "userCount": (billing_metrics.get("licenseModel") or {}).get("user_count"),
+        # "userCommit": (billing_metrics.get("licenseModel") or {}).get("user_commit"),
+        # "userCount": (billing_metrics.get("licenseModel") or {}).get("user_count"),
         "seatAdoptionBucket": (billing_metrics.get("licenseModel") or {}).get("seat_adoption_bucket"),
-        "tokenCommited": (billing_metrics.get("aiExperienceTokens") or {}).get("token_commited"),
-        "tokenActual": (billing_metrics.get("aiExperienceTokens") or {}).get("token_actual")
+        # "tokenCommited": (billing_metrics.get("aiExperienceTokens") or {}).get("token_commited"),
+        # "tokenActual": (billing_metrics.get("aiExperienceTokens") or {}).get("token_actual"),
+        
+        
+
+        "userCommit": _to_float(license_model.get("user_commit")),
+        "userCount": _to_float(license_model.get("user_count")),
+        "tokenCommited": _to_float(ai_tokens.get("token_commited")),
+        "tokenActual": _to_float(ai_tokens.get("token_actual")),
+
         
         
     }

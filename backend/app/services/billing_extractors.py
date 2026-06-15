@@ -26,30 +26,34 @@ def extract_license_model(mapped_billing: Dict[str, Any]) -> Dict[str, Any]:
     for name, obj in usage_by_name.items():
         if "genesys cloud cx" in name.lower():
             cx_candidates.append((name, obj))
-
+            
     if not cx_candidates:
         return {
             "matched_name": None,
             "license_model": "unknown",
             "user_commit": 0.0,
             "user_count": 0.0,
-            "seat_adoption_bucket": "0%"
+            "seat_adoption_bucket": "0%",
+            "unit_of_measure_type":None
+            
         }
 
     matched_name, usage_obj = cx_candidates[0]
     name_lower = matched_name.lower()
+    print(f"License name matched 8888888888888888888888888......................: {matched_name}")
 
     if "concurrent" in name_lower:
-        license_model = "concurrent"
+        license_model = matched_name
     elif "hourly" in name_lower:
-        license_model = "hourly"
+        license_model = matched_name
     elif "named" in name_lower or "configured" in name_lower:
-        license_model = "named"
+        license_model = matched_name
     else:
-        license_model = "unknown"
+        license_model = matched_name
 
     user_commit = _to_float(usage_obj.get("prepayQuantity"))   # commit
     user_count = _to_float(usage_obj.get("usageQuantity"))     # actual used
+    unit_of_measure_type = usage_obj.get("unitOfMeasureType")
 
     if user_commit > 0:
         adoption_pct = (user_count / user_commit) * 100.0
@@ -61,7 +65,8 @@ def extract_license_model(mapped_billing: Dict[str, Any]) -> Dict[str, Any]:
         "license_model": license_model,
         "user_commit": user_commit,
         "user_count": user_count,
-        "seat_adoption_bucket": round(adoption_pct, 2)
+        "seat_adoption_bucket": round(adoption_pct, 2),
+        "unit_of_measure_type":unit_of_measure_type
     }
     
     

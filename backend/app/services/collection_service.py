@@ -71,11 +71,10 @@ class CollectionService:
                 "licenseModel": extract_license_model(mapped_billing),
                 "aiExperienceTokens": extract_ai_experience_tokens(mapped_billing),  # optional but recommended
             }
-        print("*888888888888888888888888888***********************")
+        
         # IMPORTANT: pass billing_metrics here
         metrics = map_to_ui_fields(raw_data, fields=fields, billing_metrics=billing_metrics)
-        print(f"the new response is {metrics} ")
-
+        
         org_result = {
             "org_name": org.org_name,
             "success": len(task_errors) == 0 and billing_status < 400,
@@ -92,27 +91,41 @@ class CollectionService:
         return org_result
 
 
-    def run(self, interval: str, fields: Optional[List[str]] = None):
+
+
+
+    def run(
+    self,
+    interval: str,
+    fields: Optional[List[str]] = None,
+    org_name: Optional[str] = None
+):
         orgs = self.provider.get_org_credentials()
         if not orgs:
             return {"total_orgs": 0, "results": [], "message": "No org credentials found"}
+
+        # If org_name provided -> run only that org
+        # If not provided -> run all orgs
+        if org_name:
+            target = org_name.strip().lower()
+            orgs = [o for o in orgs if o.org_name and o.org_name.strip().lower() == target]
+            if not orgs:
+                return {"total_orgs": 0, "results": [], "message": f"Org not found: {org_name}"}
 
         required_task_keys = self._resolve_required_task_keys(fields)
         results = []
 
         for org in orgs:
             try:
-                # first attempt
                 token, expires_in, api_client = self._build_client(org)
                 try:
                     org_result = self._run_for_org_once(
                         org, interval, fields, required_task_keys, token, expires_in, api_client
                     )
-                    
                     results.append(org_result)
+                    # print(f"the result we got is================================##########################@@@@@@@@@@@@@@ {results} ")
 
                 except Exception as e:
-                    # retry once only for auth errors
                     if self._is_auth_error(e):
                         token, expires_in, api_client = self._build_client(org)
                         org_result = self._run_for_org_once(
@@ -126,15 +139,64 @@ class CollectionService:
             except Exception as e:
                 results.append({
                     "org_name": org.org_name,
-                     "success": False,
+                    "success": False,
                     "error": str(e),
                     "task_errors": []
                 })
-        
+
         return {
             "total_orgs": len(orgs),
             "mode": "sequential",
             "requested_fields": fields,
+            "requested_org": org_name,
             "results": results
         }
+
+
+    
+    # def run(self, interval: str, fields: Optional[List[str]] = None):
+    #     orgs = self.provider.get_org_credentials()
+    #     if not orgs:
+    #         return {"total_orgs": 0, "results": [], "message": "No org credentials found"}
+
+    #     required_task_keys = self._resolve_required_task_keys(fields)
+    #     results = []
+
+    #     for org in orgs:
+    #         try:
+    #             # first attempt
+    #             token, expires_in, api_client = self._build_client(org)
+    #             try:
+    #                 org_result = self._run_for_org_once(
+    #                     org, interval, fields, required_task_keys, token, expires_in, api_client
+    #                 )
+                    
+    #                 results.append(org_result)
+
+    #             except Exception as e:
+    #                 # retry once only for auth errors
+    #                 if self._is_auth_error(e):
+    #                     token, expires_in, api_client = self._build_client(org)
+    #                     org_result = self._run_for_org_once(
+    #                         org, interval, fields, required_task_keys, token, expires_in, api_client
+    #                     )
+    #                     org_result["token_refreshed"] = True
+    #                     results.append(org_result)
+    #                 else:
+    #                     raise
+
+    #         except Exception as e:
+    #             results.append({
+    #                 "org_name": org.org_name,
+    #                  "success": False,
+    #                 "error": str(e),
+    #                 "task_errors": []
+    #             })
+        
+    #     return {
+    #         "total_orgs": len(orgs),
+    #         "mode": "sequential",
+    #         "requested_fields": fields,
+    #         "results": results
+    #     }
 

@@ -330,14 +330,7 @@ def genesys_apitasks(interval: str, required_task_keys: Optional[Set[str]] = Non
     extractor="entity_count"                    # returns len(entities)
 ))
   
-#   # coaching activation field
-#     tasks.append(ApiTask(
-#     key="learning_activation_count",
-#     api_name="LearningApi",
-#     method_name="get_learning_modules",
-#     kwargs={},  # optional; small payload
-#     extractor="entity_count"                    # returns len(entities)
-# ))
+
 
   # gamification activation field
     tasks.append(ApiTask(
@@ -352,3 +345,4 @@ def genesys_apitasks(interval: str, required_task_keys: Optional[Set[str]] = Non
     if required_task_keys:
         tasks = [t for t in tasks if t.key in required_task_keys]
     return tasks
+

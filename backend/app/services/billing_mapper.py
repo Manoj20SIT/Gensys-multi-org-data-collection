@@ -4,7 +4,7 @@ def build_usage_name_map(billing_data: dict) -> dict:
         name = item.get("name")
         if name:
             usage_map[name] = item
-    print(f"the ne data formta for biling is {usage_map} ")
+    # print(f"the ne data formta for biling is {usage_map} ")
     return usage_map
 
 
